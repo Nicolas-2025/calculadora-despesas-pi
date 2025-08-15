@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calculadora de Despesas</title>
+  <!-- Font: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkfG3nY3GQCRa14QdqgGdG3E2cV7Zx1VQ1BM8DT6M8Y6Z0Z3E5eN6O8VA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root{
+      --bg:#0f1115;          /* fundo principal */
+      --bg2:#121520;         /* cartões */
+      --bg3:#0b0d12;         /* cabeçalhos/barras */
+      --txt:#e7eaf0;         /* texto principal */
+      --muted:#a7b0c0;       /* texto secundário */
+      --brand:#6c8cff;       /* cor primária elegante */
+      --brand-2:#8f7eff;     /* cor secundária */
+      --accent:#29d3a1;      /* acento/confirm */
+      --danger:#ff6b6b;      /* erro */
+      --warning:#ffb86b;     /* aviso */
+      --card-radius:18px;
+      --btn-radius:14px;
+      --shadow:0 10px 30px rgba(0,0,0,.35);
+      --shadow-soft:0 6px 18px rgba(0,0,0,.25);
+      --border:1px solid rgba(255,255,255,.06);
+      --focus:0 0 0 3px rgba(108,140,255,.35);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial;
+      background: radial-gradient(1200px 800px at 80% -10%, rgba(140,120,255,.20), transparent 60%),
+                  radial-gradient(900px 600px at -10% 110%, rgba(41,211,161,.12), transparent 60%),
+                  var(--bg);
+      color:var(--txt);
+      letter-spacing:.1px;
+    }
+    a{color:inherit}
+
+    /* Layout base */
+    .container{display:flex;min-height:100vh}
+    .left, .right{flex:1;display:flex;align-items:center;justify-content:center;padding:24px}
+    .left{background:linear-gradient(180deg, var(--bg3), var(--bg2)); border-right:var(--border)}
+    .brand{display:flex;align-items:center;gap:12px}
+    .brand i{font-size:22px;color:var(--accent)}
+    .brand h1{font-size:20px;margin:0;color:var(--txt);font-weight:700;letter-spacing:.4px}
+
+    /* Cards */
+    .card{width:100%;max-width:440px;background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));
+      border:var(--border); border-radius:var(--card-radius); box-shadow:var(--shadow); overflow:hidden}
+
+    .card-header{padding:22px 22px 12px;background:linear-gradient(180deg,var(--bg3),transparent);border-bottom:var(--border)}
+    .card-header h2{margin:0;font-size:22px}
+    .card-body{padding:22px}
+
+    /* Inputs */
+    .field{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+    .field label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em}
+    .input{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.03);border:var(--border);border-radius:12px;padding:12px 14px}
+    .input i{color:var(--muted)}
+    .input input, .input select{flex:1;background:transparent;border:none;outline:none;color:var(--txt);font-size:15px}
+    .helper{font-size:12px;color:var(--muted)}
+
+    /* Buttons */
+    .btn{display:inline-flex;align-items:center;gap:10px;border:none;cursor:pointer;border-radius:var(--btn-radius);padding:12px 16px;font-weight:600;transition:transform .15s ease, box-shadow .2s ease, background .2s ease, opacity .2s ease}
+    .btn i{font-size:14px}
+    .btn-primary{background:linear-gradient(135deg, var(--brand), var(--brand-2)); color:#fff; box-shadow:0 6px 16px rgba(124,128,255,.35)}
+    .btn-primary:hover{transform:translateY(-1px)}
+    .btn-ghost{background:rgba(255,255,255,.04); color:var(--txt); border:var(--border)}
+    .btn-ghost:hover{background:rgba(255,255,255,.06)}
+    .btn-danger{background:linear-gradient(135deg, var(--danger), #ff8a8a); color:#1c0b0b}
+    .btn-warning{background:linear-gradient(135deg, var(--warning), #ffd39a); color:#24190b}
+    .btn-accent{background:linear-gradient(135deg, var(--accent), #6be3c5); color:#00150e}
+
+    .switch{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-top:6px}
+    .switch .link{background:none;border:none;color:var(--brand);cursor:pointer;font-weight:600}
+
+    /* Screens */
+    .screen{opacity:0;pointer-events:none;transform:translateY(10px);transition:opacity .35s ease, transform .35s ease}
+    .screen.active{opacity:1;pointer-events:auto;transform:none}
+
+    /* Dashboard */
+    .app{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
+    .sidebar{background:linear-gradient(180deg, var(--bg3), var(--bg2));border-right:var(--border);padding:18px;display:flex;flex-direction:column;gap:16px}
+    .user{display:flex;align-items:center;gap:12px;padding:14px;background:rgba(255,255,255,.03);border:var(--border);border-radius:14px}
+    .user .avatar{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--brand),var(--brand-2));display:grid;place-items:center;font-weight:800}
+    .menu{display:flex;flex-direction:column;gap:8px}
+    .menu .btn{width:100%;justify-content:flex-start}
+
+    .content{padding:22px}
+    .toolbar{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .card h3{margin:0;font-size:16px}
+
+    .table{width:100%;border-collapse:collapse;margin-top:12px}
+    .table th,.table td{padding:10px 12px;border-bottom:var(--border);text-align:left}
+    .table th{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.12em}
+
+    .chip{display:inline-flex;gap:8px;align-items:center;background:rgba(255,255,255,.05);border:var(--border);padding:6px 10px;border-radius:999px;font-size:12px}
+
+    .right-actions{display:flex;gap:8px;align-items:center}
+
+    /* Dialog */
+    .dialog-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:20px}
+    .dialog{width:100%;max-width:520px;background:var(--bg2);border:var(--border);border-radius:18px;box-shadow:var(--shadow);overflow:hidden}
+    .dialog-header{padding:16px 18px;background:linear-gradient(180deg,var(--bg3),transparent);border-bottom:var(--border)}
+    .dialog-body{padding:18px}
+    .dialog-footer{display:flex;gap:10px;justify-content:flex-end;padding:16px 18px;border-top:var(--border)}
+    .dialog-backdrop.show{display:flex;animation:fadeIn .25s ease}
+
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+    /* Responsive */
+    @media (max-width: 980px){
+      .grid{grid-template-columns:1fr}
+      .app{grid-template-columns:1fr}
+      .sidebar{position:sticky;top:0;z-index:10}
+    }
+  </style>
+</head>
+<body>
+  <!-- Auth Screens -->
+  <div id="auth" class="container">
+    <div class="left">
+      <div>
+        <div class="brand" style="margin-bottom:14px">
+          <i class="fa-solid fa-wallet"></i>
+          <h1>Despesas Pro</h1>
+        </div>
+        <p style="max-width:420px;color:var(--muted);margin:0">Controle suas despesas com um visual moderno, gráficos em tempo real e categorias personalizadas. Tema escuro elegante e transições suaves entre as telas.</p>
+      </div>
+    </div>
+    <div class="right">
+      <!-- CADASTRO -->
+      <div id="screen-register" class="card screen active">
+        <div class="card-header"><h2><i class="fa-solid fa-user-plus"></i> Criar conta</h2></div>
+        <div class="card-body">
+          <div class="field">
+            <label>Nome</label>
+            <div class="input"><i class="fa-regular fa-user"></i><input id="regName" type="text" placeholder="Seu nome" autocomplete="name"></div>
+          </div>
+          <div class="field">
+            <label>Senha</label>
+            <div class="input"><i class="fa-solid fa-key"></i><input id="regPass" type="password" placeholder="Crie uma senha" autocomplete="new-password"></div>
+          </div>
+          <button id="btnRegister" class="btn btn-primary"><i class="fa-solid fa-check"></i> Cadastrar</button>
+          <div class="switch">
+            <span class="helper">Já tem conta?</span>
+            <button class="link" id="goLogin">Entrar</button>
+          </div>
+        </div>
+      </div>
+      <!-- LOGIN -->
+      <div id="screen-login" class="card screen">
+        <div class="card-header"><h2><i class="fa-solid fa-right-to-bracket"></i> Entrar</h2></div>
+        <div class="card-body">
+          <div class="field">
+            <label>Nome</label>
+            <div class="input"><i class="fa-regular fa-user"></i><input id="logName" type="text" placeholder="Seu nome" autocomplete="username"></div>
+          </div>
+          <div class="field">
+            <label>Senha</label>
+            <div class="input"><i class="fa-solid fa-key"></i><input id="logPass" type="password" placeholder="Sua senha" autocomplete="current-password"></div>
+          </div>
+          <button id="btnLogin" class="btn btn-primary"><i class="fa-solid fa-unlock"></i> Login</button>
+          <div class="switch">
+            <span class="helper">Não tem conta?</span>
+            <button class="link" id="goRegister">Criar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- App -->
+  <div id="app" class="app screen" style="display:none">
+    <aside class="sidebar">
+      <div class="brand" style="margin-bottom:4px">
+        <i class="fa-solid fa-wallet"></i>
+        <h1>Despesas Pro</h1>
+      </div>
+      <div class="user">
+        <div class="avatar" id="userAvatar">U</div>
+        <div>
+          <div id="userName" style="font-weight:700">Usuário</div>
+          <div class="helper">Tema escuro ativo</div>
+        </div>
+      </div>
+      <div class="menu">
+        <button id="btnOpenAdd" class="btn btn-accent"><i class="fa-solid fa-plus"></i> Nova despesa</button>
+        <button id="btnOpenCats" class="btn btn-ghost"><i class="fa-solid fa-tag"></i> Categorias</button>
+        <button id="btnLogout" class="btn btn-danger"><i class="fa-solid fa-arrow-right-from-bracket"></i> Sair</button>
+      </div>
+      <div style="margin-top:auto;font-size:12px;color:var(--muted)">
+        <div class="chip" title="Local Storage habilitado">
+          <i class="fa-solid fa-database"></i>
+          Pronto para MySQL (via API)
+        </div>
+      </div>
+    </aside>
+    <main class="content">
+      <div class="toolbar">
+        <div class="input" style="min-width:240px">
+          <i class="fa-regular fa-calendar"></i>
+          <input type="date" id="fromDate">
+          <span style="color:var(--muted)">→</span>
+          <input type="date" id="toDate">
+        </div>
+        <div class="input" style="min-width:220px">
+          <i class="fa-solid fa-filter"></i>
+          <select id="filterCategory"></select>
+        </div>
+        <button id="btnApplyFilter" class="btn btn-primary"><i class="fa-solid fa-magnifying-glass"></i> Filtrar</button>
+        <div class="right-actions" style="margin-left:auto">
+          <div class="chip"><i class="fa-solid fa-sack-dollar"></i> Total: <span id="totalOut" style="font-weight:700;margin-left:6px">R$ 0,00</span></div>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="card">
+          <div class="card-header"><h3><i class="fa-solid fa-chart-line"></i> Despesas por mês</h3></div>
+          <div class="card-body">
+            <canvas id="chartMonthly" height="140"></canvas>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3><i class="fa-solid fa-chart-pie"></i> Despesas por categoria</h3></div>
+          <div class="card-body">
+            <canvas id="chartByCat" height="140"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:16px">
+        <div class="card-header"><h3><i class="fa-solid fa-table"></i> Lista de despesas</h3></div>
+        <div class="card-body">
+          <table class="table" id="tbl">
+            <thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Valor</th><th style="width:1%"></th></tr></thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Dialogs -->
+  <div id="dlgExpense" class="dialog-backdrop">
+    <div class="dialog">
+      <div class="dialog-header"><h3><i class="fa-solid fa-plus"></i> Nova despesa</h3></div>
+      <div class="dialog-body">
+        <div class="field">
+          <label>Data</label>
+          <div class="input"><i class="fa-regular fa-calendar"></i><input type="date" id="expDate"></div>
+        </div>
+        <div class="field">
+          <label>Descrição</label>
+          <div class="input"><i class="fa-regular fa-file-lines"></i><input type="text" id="expDesc" placeholder="Ex: Mercado"></div>
+        </div>
+        <div class="field">
+          <label>Categoria</label>
+          <div class="input"><i class="fa-solid fa-tag"></i>
+            <select id="expCat"></select>
+          </div>
+        </div>
+        <div class="field">
+          <label>Valor (R$)</label>
+          <div class="input"><i class="fa-solid fa-coins"></i><input type="number" step="0.01" id="expValue" placeholder="0,00"></div>
+        </div>
+      </div>
+      <div class="dialog-footer">
+        <button class="btn btn-ghost" data-close="dlgExpense"><i class="fa-regular fa-circle-xmark"></i> Cancelar</button>
+        <button id="btnSaveExpense" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="dlgCats" class="dialog-backdrop">
+    <div class="dialog">
+      <div class="dialog-header"><h3><i class="fa-solid fa-tag"></i> Categorias</h3></div>
+      <div class="dialog-body">
+        <div class="field">
+          <label>Nova categoria</label>
+          <div class="input"><i class="fa-solid fa-plus"></i><input type="text" id="newCatName" placeholder="Ex: Academia"></div>
+        </div>
+        <button id="btnAddCat" class="btn btn-accent"><i class="fa-solid fa-check"></i> Adicionar</button>
+        <div style="height:12px"></div>
+        <div id="catList" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+      </div>
+      <div class="dialog-footer">
+        <button class="btn btn-ghost" data-close="dlgCats"><i class="fa-regular fa-circle-xmark"></i> Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ==================== CONFIG de API (Pronto para MySQL) ====================
+       Troque USE_API para true e implemente os endpoints no seu backend (Node/PHP/etc)
+       que falem com o MySQL. Os métodos abaixo já estão preparados para usar fetch().
+    */
+    const USE_API = false; // <- mude para true quando tiver sua API
+    const API = {
+      async register({name, password}){
+        if(!USE_API){ return Local.register({name,password}); }
+        const r = await fetch('/api/register', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({name,password})});
+        if(!r.ok) throw new Error('Falha ao registrar');
+        return r.json();
+      },
+      async login({name, password}){
+        if(!USE_API){ return Local.login({name,password}); }
+        const r = await fetch('/api/login', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({name,password})});
+        if(!r.ok) throw new Error('Falha no login');
+        return r.json();
+      },
+      async getCategories(){
+        if(!USE_API){ return Local.getCategories(); }
+        const r = await fetch('/api/categories');
+        if(!r.ok) throw new Error('Erro ao carregar categorias');
+        return r.json();
+      },
+      async addCategory(name){
+        if(!USE_API){ return Local.addCategory(name); }
+        const r = await fetch('/api/categories', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({name})});
+        if(!r.ok) throw new Error('Erro ao adicionar categoria');
+        return r.json();
+      },
+      async getExpenses(filters){
+        if(!USE_API){ return Local.getExpenses(filters); }
+        const params = new URLSearchParams(filters).toString();
+        const r = await fetch('/api/expenses?'+params);
+        if(!r.ok) throw new Error('Erro ao buscar despesas');
+        return r.json();
+      },
+      async addExpense(exp){
+        if(!USE_API){ return Local.addExpense(exp); }
+        const r = await fetch('/api/expenses', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(exp)});
+        if(!r.ok) throw new Error('Erro ao salvar despesa');
+        return r.json();
+      },
+      async removeExpense(id){
+        if(!USE_API){ return Local.removeExpense(id); }
+        const r = await fetch('/api/expenses/'+id, {method:'DELETE'});
+        if(!r.ok) throw new Error('Erro ao remover despesa');
+        return r.json();
+      },
+      currentUser(){
+        if(!USE_API){ return Local.currentUser(); }
+        // quando usar API, você deve guardar token/session no cookie/localStorage
+        return JSON.parse(localStorage.getItem('currentUser'));
+      },
+      logout(){
+        if(!USE_API){ return Local.logout(); }
+        localStorage.removeItem('currentUser');
+      }
+    }
+
+    /* ==================== STORAGE LOCAL (fallback) ==================== */
+    const Local = (()=>{
+      const LS_USERS = 'dp_users';
+      const LS_SESSION = 'dp_session';
+      const LS_CATS = (u)=>`dp_${u}_cats`;
+      const LS_EXPS = (u)=>`dp_${u}_exps`;
+
+      function read(key, def){ return JSON.parse(localStorage.getItem(key) || def) }
+      function write(key, val){ localStorage.setItem(key, JSON.stringify(val)) }
+
+      function currentUser(){ return JSON.parse(localStorage.getItem(LS_SESSION) || 'null') }
+
+      function register({name,password}){
+        name = (name||'').trim();
+        password = (password||'').trim();
+        if(!name || !password) throw new Error('Preencha nome e senha');
+        const users = read(LS_USERS,'[]');
+        if(users.find(u=>u.name.toLowerCase()===name.toLowerCase())) throw new Error('Nome já cadastrado');
+        const user = {id:crypto.randomUUID(), name, passwordHash: btoa(password)}; // simples demo
+        users.push(user); write(LS_USERS, users);
+        localStorage.setItem(LS_SESSION, JSON.stringify({id:user.id,name:user.name}));
+        // categorias padrão
+        write(LS_CATS(user.id), JSON.stringify(['Alimentação','Transporte','Moradia','Lazer','Saúde','Educação','Outros']));
+        write(LS_EXPS(user.id), JSON.stringify([]));
+        return {ok:true, user:{id:user.id,name:user.name}};
+      }
+
+      function login({name,password}){
+        const users = read(LS_USERS,'[]');
+        const u = users.find(u=>u.name.toLowerCase()===(name||'').toLowerCase());
+        if(!u || u.passwordHash!==btoa(password||'')) throw new Error('Credenciais inválidas');
+        localStorage.setItem(LS_SESSION, JSON.stringify({id:u.id,name:u.name}));
+        if(!localStorage.getItem(LS_CATS(u.id))) write(LS_CATS(u.id), JSON.stringify(['Alimentação','Transporte','Moradia','Lazer','Saúde','Educação','Outros']));
+        if(!localStorage.getItem(LS_EXPS(u.id))) write(LS_EXPS(u.id), JSON.stringify([]));
+        return {ok:true, user:{id:u.id,name:u.name}};
+      }
+
+      function logout(){ localStorage.removeItem(LS_SESSION) }
+
+      function getCategories(){
+        const cu = currentUser(); if(!cu) return [];
+        return JSON.parse(read(LS_CATS(cu.id),'[]'));
+      }
+      function addCategory(name){
+        const cu = currentUser(); if(!cu) throw new Error('Sem sessão');
+        const cats = JSON.parse(read(LS_CATS(cu.id),'[]'));
+        if(!name || cats.map(c=>c.toLowerCase()).includes(name.toLowerCase())) return cats;
+        cats.push(name); write(LS_CATS(cu.id), JSON.stringify(cats));
+        return cats;
+      }
+
+      function getExpenses({from,to,category}={}){
+        const cu = currentUser(); if(!cu) return [];
+        const exps = JSON.parse(read(LS_EXPS(cu.id),'[]'));
+        return exps.filter(e=>{
+          const okCat = !category || category==='__all__' || e.category===category;
+          const d = new Date(e.date);
+          const okFrom = !from || new Date(from) <= d;
+          const okTo = !to || d <= new Date(to);
+          return okCat && okFrom && okTo;
+        });
+      }
+      function addExpense(exp){
+        const cu = currentUser(); if(!cu) throw new Error('Sem sessão');
+        const exps = JSON.parse(read(LS_EXPS(cu.id),'[]'));
+        exp.id = crypto.randomUUID();
+        exps.push(exp); write(LS_EXPS(cu.id), JSON.stringify(exps));
+        return exp;
+      }
+      function removeExpense(id){
+        const cu = currentUser(); if(!cu) throw new Error('Sem sessão');
+        let exps = JSON.parse(read(LS_EXPS(cu.id),'[]'));
+        exps = exps.filter(e=>e.id!==id); write(LS_EXPS(cu.id), JSON.stringify(exps));
+        return {ok:true}
+      }
+
+      return {register, login, logout, currentUser, getCategories, addCategory, getExpenses, addExpense, removeExpense}
+    })();
+
+    /* ==================== UI / APP ==================== */
+    const $ = (sel)=>document.querySelector(sel);
+    const $$ = (sel)=>document.querySelectorAll(sel);
+
+    const appState = { charts:{monthly:null, byCat:null}, filter:{from:null,to:null,category:'__all__'} };
+
+    // Auth Navigation
+    $('#goLogin').addEventListener('click',()=>switchScreen('login'));
+    $('#goRegister').addEventListener('click',()=>switchScreen('register'));
+
+    function switchScreen(name){
+      const reg = $('#screen-register');
+      const log = $('#screen-login');
+      [reg,log].forEach(el=>el.classList.remove('active'));
+      if(name==='login') log.classList.add('active');
+      else reg.classList.add('active');
+    }
+
+    // Register / Login
+    $('#btnRegister').addEventListener('click', async ()=>{
+      try{
+        const name = $('#regName').value; const password = $('#regPass').value;
+        await API.register({name,password});
+        startApp();
+      }catch(e){ alert(e.message||'Erro ao cadastrar'); }
+    });
+
+    $('#btnLogin').addEventListener('click', async ()=>{
+      try{
+        const name = $('#logName').value; const password = $('#logPass').value;
+        await API.login({name,password});
+        startApp();
+      }catch(e){ alert(e.message||'Erro no login'); }
+    });
+
+    // App Buttons
+    $('#btnLogout').addEventListener('click',()=>{ API.logout(); location.reload(); });
+    $('#btnOpenAdd').addEventListener('click',()=> openDialog('dlgExpense', ()=>{ $('#expDate').valueAsDate = new Date(); $('#expDesc').value=''; $('#expValue').value=''; refreshCatSelects(); }));
+    $('#btnOpenCats').addEventListener('click',()=> openDialog('dlgCats', renderCatList));
+
+    $$("[data-close]").forEach(b=> b.addEventListener('click', e=> closeDialog(e.target.getAttribute('data-close')) ));
+
+    function openDialog(id, onOpen){ const el = document.getElementById(id); el.classList.add('show'); onOpen && onOpen(); }
+    function closeDialog(id){ document.getElementById(id).classList.remove('show'); }
+
+    // Save Expense
+    $('#btnSaveExpense').addEventListener('click', async ()=>{
+      try{
+        const date = $('#expDate').value; const description = $('#expDesc').value.trim();
+        const category = $('#expCat').value; const value = parseFloat($('#expValue').value||'0');
+        if(!date || !description || !category || !(value>0)) throw new Error('Preencha os campos corretamente');
+        await API.addExpense({date, description, category, value});
+        closeDialog('dlgExpense');
+        await refreshAll();
+      }catch(e){ alert(e.message||'Erro ao salvar'); }
+    });
+
+    // Categories
+    $('#btnAddCat').addEventListener('click', async ()=>{
+      const name = ($('#newCatName').value||'').trim();
+      if(!name) return;
+      await API.addCategory(name);
+      $('#newCatName').value='';
+      refreshCatSelects();
+      renderCatList();
+    });
+
+    function renderCatList(){
+      const cats = API.getCategories();
+      const wrap = $('#catList');
+      wrap.innerHTML = '';
+      cats.forEach(c=>{
+        const el = document.createElement('div');
+        el.className='chip';
+        el.innerHTML = `<i class="fa-solid fa-tag"></i> ${c}`;
+        wrap.appendChild(el);
+      })
+    }
+
+    function refreshCatSelects(){
+      const cats = API.getCategories();
+      // Despesa modal select
+      const sel1 = $('#expCat'); sel1.innerHTML = cats.map(c=>`<option>${c}</option>`).join('');
+      // Filtro
+      const sel2 = $('#filterCategory');
+      const opts = ['<option value="__all__">Todas as categorias</option>'].concat(cats.map(c=>`<option value="${c}">${c}</option>`));
+      sel2.innerHTML = opts.join('');
+      sel2.value = appState.filter.category || '__all__';
+    }
+
+    // Filters
+    $('#btnApplyFilter').addEventListener('click', ()=>{
+      appState.filter.from = $('#fromDate').value || null;
+      appState.filter.to = $('#toDate').value || null;
+      appState.filter.category = $('#filterCategory').value || '__all__';
+      refreshAll();
+    });
+
+    // Table + totals
+    function renderTable(items){
+      const tbody = $('#tbody'); tbody.innerHTML='';
+      let total = 0;
+      items.sort((a,b)=> new Date(b.date)-new Date(a.date)).forEach(it=>{
+        total += Number(it.value)||0;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${new Date(it.date).toLocaleDateString()}</td>
+          <td>${escapeHtml(it.description)}</td>
+          <td><span class="chip"><i class="fa-solid fa-tag"></i> ${escapeHtml(it.category)}</span></td>
+          <td><b>R$ ${Number(it.value).toFixed(2)}</b></td>
+          <td><button class="btn btn-ghost" title="Remover" data-remove="${it.id}"><i class="fa-regular fa-trash-can"></i></button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+      $('#totalOut').textContent = total.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+      $$('button[data-remove]').forEach(b=> b.addEventListener('click', async (e)=>{
+        const id = e.currentTarget.getAttribute('data-remove');
+        if(confirm('Remover esta despesa?')){ await API.removeExpense(id); refreshAll(); }
+      }));
+    }
+
+    // Charts
+    function renderCharts(items){
+      const byMonth = {};
+      const byCat = {};
+      items.forEach(it=>{
+        const d = new Date(it.date);
+        const key = `${d.getFullYear()}-${('0'+(d.getMonth()+1)).slice(-2)}`;
+        byMonth[key] = (byMonth[key]||0) + Number(it.value||0);
+        byCat[it.category] = (byCat[it.category]||0) + Number(it.value||0);
+      });
+      const mLabels = Object.keys(byMonth).sort();
+      const mValues = mLabels.map(k=> byMonth[k]);
+      const cLabels = Object.keys(byCat);
+      const cValues = cLabels.map(k=> byCat[k]);
+
+      if(appState.charts.monthly) appState.charts.monthly.destroy();
+      if(appState.charts.byCat) appState.charts.byCat.destroy();
+
+      appState.charts.monthly = new Chart(document.getElementById('chartMonthly'),{
+        type:'line', data:{ labels:mLabels, datasets:[{ label:'Total (R$)', data:mValues, tension:.35, fill:true }] }, options:{ plugins:{legend:{labels:{color:'#cfd6e4'}}}, scales:{x:{ticks:{color:'#cfd6e4'}}, y:{ticks:{color:'#cfd6e4'}}} }
+      });
+      appState.charts.byCat = new Chart(document.getElementById('chartByCat'),{
+        type:'doughnut', data:{ labels:cLabels, datasets:[{ data:cValues }] }, options:{ plugins:{legend:{position:'bottom', labels:{color:'#cfd6e4'}}} }
+      });
+    }
+
+    // Helpers
+    function escapeHtml(s){ return s.replace(/[&<>"']/g, m=> ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[m]) ) }
+
+    async function refreshAll(){
+      const items = await API.getExpenses(appState.filter);
+      renderTable(items);
+      renderCharts(items);
+    }
+
+    function startApp(){
+      const user = API.currentUser();
+      if(!user) return;
+      document.getElementById('auth').style.display='none';
+      const appEl = document.getElementById('app');
+      appEl.style.display='grid';
+      appEl.classList.add('active');
+      $('#userName').textContent = user.name;
+      $('#userAvatar').textContent = (user.name||'U').slice(0,1).toUpperCase();
+      refreshCatSelects();
+      renderCatList();
+      refreshAll();
+    }
+
+    // Auto start if already logged in
+    window.addEventListener('DOMContentLoaded',()=>{
+      if(API.currentUser()) startApp();
+    })
+  </script>
+</body>
+</html>
