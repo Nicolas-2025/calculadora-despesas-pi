@@ -1,62 +1,58 @@
-import { Router } from 'express';
+import express from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import bcrypt from 'bcryptjs';
-import { query, getConnection } from '../db.js';
-import { assertNonEmpty } from '../utils/validators.js';
+import bcrypt from 'bcrypt';
+import db from '../db.js';
 
-const router = Router();
-const DEFAULT_CATS = ['Alimentação','Transporte','Moradia','Lazer','Saúde','Educação','Outros'];
+const router = express.Router();
 
-router.post('/register', async (req, res)=>{
-  try{
-    const { name, password } = req.body || {};
-    assertNonEmpty(name, 'Informe o nome');
-    assertNonEmpty(password, 'Informe a senha');
+// ================= REGISTER =================
+router.post('/register', async (req, res) => {
+  try {
+    const { name, password } = req.body;
+    if (!name || !password) return res.status(400).json({ error: 'Nome e senha obrigatórios' });
+
+    // Verifica se já existe
+    const [exists] = await db.query('SELECT id FROM users WHERE name = ?', [name]);
+    if (exists.length > 0) {
+      return res.status(400).json({ error: 'Nome já cadastrado' });
+    }
 
     const id = uuidv4();
-    const hash = await bcrypt.hash(String(password), 10);
+    const passwordHash = await bcrypt.hash(password, 10);
 
-    const conn = await getConnection();
-    try{
-      await conn.beginTransaction();
-      await conn.execute('INSERT INTO users (id,name,password_hash) VALUES (?,?,?)', [id, name, hash]);
-      // categorias padrão
-      for(const c of DEFAULT_CATS){
-        await conn.execute('INSERT INTO categories (user_id, name) VALUES (?,?)', [id, c]);
-      }
-      await conn.commit();
-    }catch(err){
-      await conn.rollback();
-      if(err && err.code === 'ER_DUP_ENTRY'){
-        const e = new Error('Nome já cadastrado'); e.status=409; throw e;
-      }
-      throw err;
-    }finally{ conn.release(); }
+    // Insere usuário
+    await db.query('INSERT INTO users (id, name, password_hash) VALUES (?, ?, ?)', [id, name, passwordHash]);
 
-    res.json({ ok:true, user:{ id, name } });
-  }catch(err){
-    const status = err.status || 500;
-    res.status(status).json({ ok:false, error: err.message || 'Erro interno'});
+    // Categorias padrão
+    const defaultCats = ['Alimentação','Transporte','Moradia','Lazer','Saúde','Educação','Outros'];
+    for (const cat of defaultCats) {
+      await db.query('INSERT INTO categories (user_id, name) VALUES (?, ?)', [id, cat]);
+    }
+
+    res.json({ ok: true, user: { id, name } });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Erro ao registrar usuário' });
   }
 });
 
-router.post('/login', async (req, res)=>{
-  try{
-    const { name, password } = req.body || {};
-    assertNonEmpty(name, 'Informe o nome');
-    assertNonEmpty(password, 'Informe a senha');
+// ================= LOGIN =================
+router.post('/login', async (req, res) => {
+  try {
+    const { name, password } = req.body;
+    if (!name || !password) return res.status(400).json({ error: 'Credenciais obrigatórias' });
 
-    const rows = await query('SELECT id, name, password_hash FROM users WHERE LOWER(name)=LOWER(?) LIMIT 1', [name]);
-    if(rows.length===0) return res.status(401).json({ ok:false, error:'Credenciais inválidas' });
+    const [rows] = await db.query('SELECT * FROM users WHERE name = ?', [name]);
+    if (rows.length === 0) return res.status(401).json({ error: 'Usuário não encontrado' });
 
-    const u = rows[0];
-    const ok = await bcrypt.compare(String(password), u.password_hash);
-    if(!ok) return res.status(401).json({ ok:false, error:'Credenciais inválidas' });
+    const user = rows[0];
+    const valid = await bcrypt.compare(password, user.password_hash);
+    if (!valid) return res.status(401).json({ error: 'Senha inválida' });
 
-    res.json({ ok:true, user:{ id: u.id, name: u.name } });
-  }catch(err){
-    const status = err.status || 500;
-    res.status(status).json({ ok:false, error: err.message || 'Erro interno'});
+    res.json({ ok: true, user: { id: user.id, name: user.name } });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Erro no login' });
   }
 });
 

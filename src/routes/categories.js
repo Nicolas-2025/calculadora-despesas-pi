@@ -1,37 +1,36 @@
-import { Router } from 'express';
-import { query } from '../db.js';
-import { assertNonEmpty } from '../utils/validators.js';
+import express from 'express';
+import db from '../db.js'; // ajuste o caminho se seu arquivo de conexão for diferente
 
-const router = Router();
+const router = express.Router();
 
-// Middleware simples para obter userId a partir do header
-router.use((req,res,next)=>{
-  const userId = req.header('x-user-id');
-  if(!userId){
-    return res.status(401).json({ ok:false, error:'x-user-id ausente' });
+// Lista categorias do usuário
+router.get('/', async (req, res) => {
+  try {
+    const userId = req.query.userId; // vem do frontend
+    if (!userId) return res.status(400).json({ error: 'userId é obrigatório' });
+
+    const [rows] = await db.query('SELECT id, name FROM categories WHERE user_id = ?', [userId]);
+    res.json({ categories: rows.map(r => r.name) }); // frontend espera array de nomes
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Erro ao buscar categorias' });
   }
-  req.userId = userId; next();
 });
 
-router.get('/', async (req, res)=>{
-  try{
-    const cats = await query('SELECT name FROM categories WHERE user_id=? ORDER BY name', [req.userId]);
-    res.json(cats.map(c=>c.name));
-  }catch(err){ res.status(500).json({ok:false, error:'Erro ao carregar categorias'}); }
-});
+// Adiciona categoria
+router.post('/', async (req, res) => {
+  try {
+    const { userId, name } = req.body;
+    if (!userId || !name) return res.status(400).json({ error: 'Campos obrigatórios ausentes' });
 
-router.post('/', async (req, res)=>{
-  try{
-    const { name } = req.body || {};
-    assertNonEmpty(name, 'Informe o nome da categoria');
-    try{
-      await query('INSERT INTO categories (user_id, name) VALUES (?,?)', [req.userId, name]);
-    }catch(e){ /* ignora duplicada */ }
-    const cats = await query('SELECT name FROM categories WHERE user_id=? ORDER BY name', [req.userId]);
-    res.json(cats.map(c=>c.name));
-  }catch(err){
-    const status = err.status || 500;
-    res.status(status).json({ ok:false, error: err.message || 'Erro ao adicionar categoria' });
+    await db.query('INSERT INTO categories (user_id, name) VALUES (?, ?)', [userId, name]);
+    res.json({ ok: true, name });
+  } catch (err) {
+    if (err.code === 'ER_DUP_ENTRY') {
+      return res.status(400).json({ error: 'Categoria já existe para este usuário' });
+    }
+    console.error(err);
+    res.status(500).json({ error: 'Erro ao adicionar categoria' });
   }
 });
 

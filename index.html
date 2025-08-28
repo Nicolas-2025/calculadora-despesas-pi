@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <!-- Icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkfG3nY3GQCRa14QdqgGdG3E2cV7Zx1VQ1BM8DT6M8Y6Z0Z3E5eN6O8VA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
@@ -303,62 +303,81 @@
        Troque USE_API para true e implemente os endpoints no seu backend (Node/PHP/etc)
        que falem com o MySQL. Os métodos abaixo já estão preparados para usar fetch().
     */
-    const USE_API = false; // <- mude para true quando tiver sua API
-    const API = {
-      async register({name, password}){
-        if(!USE_API){ return Local.register({name,password}); }
-        const r = await fetch('/api/register', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({name,password})});
-        if(!r.ok) throw new Error('Falha ao registrar');
-        return r.json();
-      },
-      async login({name, password}){
-        if(!USE_API){ return Local.login({name,password}); }
-        const r = await fetch('/api/login', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({name,password})});
-        if(!r.ok) throw new Error('Falha no login');
-        return r.json();
-      },
-      async getCategories(){
-        if(!USE_API){ return Local.getCategories(); }
-        const r = await fetch('/api/categories');
-        if(!r.ok) throw new Error('Erro ao carregar categorias');
-        return r.json();
-      },
-      async addCategory(name){
-        if(!USE_API){ return Local.addCategory(name); }
-        const r = await fetch('/api/categories', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({name})});
-        if(!r.ok) throw new Error('Erro ao adicionar categoria');
-        return r.json();
-      },
-      async getExpenses(filters){
-        if(!USE_API){ return Local.getExpenses(filters); }
-        const params = new URLSearchParams(filters).toString();
-        const r = await fetch('/api/expenses?'+params);
-        if(!r.ok) throw new Error('Erro ao buscar despesas');
-        return r.json();
-      },
-      async addExpense(exp){
-        if(!USE_API){ return Local.addExpense(exp); }
-        const r = await fetch('/api/expenses', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(exp)});
-        if(!r.ok) throw new Error('Erro ao salvar despesa');
-        return r.json();
-      },
-      async removeExpense(id){
-        if(!USE_API){ return Local.removeExpense(id); }
-        const r = await fetch('/api/expenses/'+id, {method:'DELETE'});
-        if(!r.ok) throw new Error('Erro ao remover despesa');
-        return r.json();
-      },
-      currentUser(){
-        if(!USE_API){ return Local.currentUser(); }
-        // quando usar API, você deve guardar token/session no cookie/localStorage
-        return JSON.parse(localStorage.getItem('currentUser'));
-      },
-      logout(){
-        if(!USE_API){ return Local.logout(); }
-        localStorage.removeItem('currentUser');
-      }
-    }
 
+const USE_API = true;
+const API_URL = 'http://localhost:3000'; 
+
+const API = {
+  async register({name, password}){
+    const r = await fetch(`${API_URL}/api/register`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name,password})
+    });
+    if(!r.ok) throw new Error('Falha ao registrar');
+    return r.json();
+  },
+  async login({name, password}){
+    const r = await fetch(`${API_URL}/api/login`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name,password})
+    });
+    if(!r.ok) throw new Error('Falha no login');
+    return r.json();
+  },
+  async getCategories(){
+    const user = API.currentUser();
+    if(!user) return [];
+    const r = await fetch(`${API_URL}/api/categories?userId=${user.id}`);
+    if(!r.ok) throw new Error('Erro ao carregar categorias');
+    const data = await r.json();
+    return data.categories || [];
+  },
+  async addCategory(name){
+    const user = API.currentUser();
+    if(!user) throw new Error('Usuário não logado');
+    const r = await fetch(`${API_URL}/api/categories`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ userId: user.id, name })
+    });
+    if(!r.ok) throw new Error('Erro ao adicionar categoria');
+    return r.json();
+  },
+  async getExpenses(filters){
+    const user = API.currentUser();
+    if(!user) return [];
+    const params = new URLSearchParams({ ...filters, userId: user.id }).toString();
+    const r = await fetch(`${API_URL}/api/expenses?`+params);
+    if(!r.ok) throw new Error('Erro ao buscar despesas');
+    return r.json();
+  },
+  async addExpense(exp){
+    const user = API.currentUser();
+    if(!user) throw new Error('Usuário não logado');
+    const r = await fetch(`${API_URL}/api/expenses`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ ...exp, userId: user.id })
+    });
+    if(!r.ok) throw new Error('Erro ao salvar despesa');
+    return r.json();
+  },
+  async removeExpense(id){
+    const r = await fetch(`${API_URL}/api/expenses/`+id, {method:'DELETE'});
+    if(!r.ok) throw new Error('Erro ao remover despesa');
+    return r.json();
+  },
+  currentUser(){
+    return JSON.parse(localStorage.getItem('currentUser'));
+  },
+  logout(){
+    localStorage.removeItem('currentUser');
+  }
+}
+</script>
+<script>
     /* ==================== STORAGE LOCAL (fallback) ==================== */
     const Local = (()=>{
       const LS_USERS = 'dp_users';
@@ -467,10 +486,18 @@
 
     $('#btnLogin').addEventListener('click', async ()=>{
       try{
-        const name = $('#logName').value; const password = $('#logPass').value;
-        await API.login({name,password});
+        const name = $('#logName').value; 
+        const password = $('#logPass').value;
+        const resp = await API.login({name,password});
+        // Mostra o resultado no console para diagnóstico
+        console.log('Login response:', resp);
+        localStorage.setItem('currentUser', JSON.stringify(resp.user));
         startApp();
-      }catch(e){ alert(e.message||'Erro no login'); }
+      }catch(e){ 
+        // Mostra o erro detalhado
+        alert(e.message || 'Erro no login');
+        console.error('Login error:', e);
+      }
     });
 
     // App Buttons
@@ -505,28 +532,34 @@
       renderCatList();
     });
 
-    function renderCatList(){
-      const cats = API.getCategories();
-      const wrap = $('#catList');
-      wrap.innerHTML = '';
-      cats.forEach(c=>{
-        const el = document.createElement('div');
-        el.className='chip';
-        el.innerHTML = `<i class="fa-solid fa-tag"></i> ${c}`;
-        wrap.appendChild(el);
-      })
-    }
+    async function renderCatList() {
+  const cats = await API.getCategories(); // <- await aqui
+  const wrap = $('#catList');
+  wrap.innerHTML = '';
+  cats.forEach(c => {
+    const el = document.createElement('div');
+    el.className = 'chip';
+    el.innerHTML = `<i class="fa-solid fa-tag"></i> ${c}`;
+    wrap.appendChild(el);
+  });
+}
 
-    function refreshCatSelects(){
-      const cats = API.getCategories();
-      // Despesa modal select
-      const sel1 = $('#expCat'); sel1.innerHTML = cats.map(c=>`<option>${c}</option>`).join('');
-      // Filtro
-      const sel2 = $('#filterCategory');
-      const opts = ['<option value="__all__">Todas as categorias</option>'].concat(cats.map(c=>`<option value="${c}">${c}</option>`));
-      sel2.innerHTML = opts.join('');
-      sel2.value = appState.filter.category || '__all__';
-    }
+async function refreshCatSelects() {
+  const cats = await API.getCategories(); // <- await aqui também
+
+  // Despesa modal select
+  const sel1 = $('#expCat');
+  sel1.innerHTML = cats.map(c => `<option>${c}</option>`).join('');
+
+  // Filtro
+  const sel2 = $('#filterCategory');
+  const opts = ['<option value="__all__">Todas as categorias</option>'].concat(
+    cats.map(c => `<option value="${c}">${c}</option>`)
+  );
+  sel2.innerHTML = opts.join('');
+  sel2.value = appState.filter.category || '__all__';
+}
+
 
     // Filters
     $('#btnApplyFilter').addEventListener('click', ()=>{
