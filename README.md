@@ -34,7 +34,7 @@ Users can register, log in, create categories, add expenses, and visualize their
 ## 🏗️ Project Structure
 
 ```
-projetocalc/
+calculadora-despesas-pi/
 ├── index.html           # Main frontend (login + dashboard)
 ├── schema.sql           # MySQL database schema
 ├── .env                 # Environment variables
@@ -42,13 +42,8 @@ projetocalc/
 ├── src/
 │   ├── server.js        # Express server entry point
 │   ├── routes/          # API endpoints (auth, categories, expenses)
-│   ├── controllers/     # Business logic
-│   ├── models/          # Database queries
-│   └── middleware/      # Authentication, error handling
 └── node_modules/        # Installed dependencies
 ```
-
-
 ---
 
 ## ⚙️ Installation
