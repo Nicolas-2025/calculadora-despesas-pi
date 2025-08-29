@@ -1,67 +1,68 @@
-📊 Expense Calculator
+# 📊 Expense Calculator
 
-A full-stack Expense Calculator application built with Node.js + Express, MySQL, and a modern HTML/CSS/JavaScript frontend.
-It allows users to register, log in, create categories, add expenses, and visualize data with charts.
+A full-stack expense tracking application built with **Node.js + Express**, **MySQL**, and a modern **HTML/CSS/JavaScript** frontend.  
+Users can register, log in, create categories, add expenses, and visualize their data with interactive charts.
 
-🚀 Features
+---
 
-🔐 User Authentication
+## 🚀 Features
 
-Register with name & password (hashed with bcrypt).
+### 🔐 User Authentication
+- Register with name and password (hashed using bcrypt).
+- Secure login system.
 
-Secure login system.
+### 📂 Categories
+- Create and manage custom expense categories.
 
-📂 Categories
+### 💰 Expense Tracking
+- Add expenses with date, category, description, and value.
+- Filter by category or date.
 
-Create and manage your own expense categories.
+### 📊 Data Visualization
+- Interactive charts powered by **Chart.js**.
 
-💰 Expense Tracking
+### 🎨 Modern UI
+- Dark theme with elegant color palette.
+- Responsive design using CSS variables and Google Fonts.
 
-Add expenses with date, category, description, and value.
+### ⚡ Backend API
+- Built with **Express**, **MySQL2**, **UUID**.
+- Secured with **Helmet** and **CORS**.
 
-Filter by category or date.
+---
 
-📊 Data Visualization
+## 🏗️ Project Structure
 
-Dynamic charts powered by Chart.js
-.
-
-🎨 Modern UI
-
-Dark theme with elegant colors.
-
-Responsive design using CSS variables and Google Fonts.
-
-⚡ Backend API
-
-Built with Express, MySQL2, UUID, and secured with Helmet + CORS.
-
-🏗️ Project Structure
 projetocalc/
-  ├── projetocalc/
-  │   ├── index.html        # Main frontend (login + dashboard)
-  │   ├── schema.sql        # MySQL database schema
-  │   ├── .env              # Environment variables
-  │   ├── package.json      # Node.js dependencies & scripts
-  │   ├── src/
-  │   │   ├── server.js     # Express server entry point
-  │   │   ├── routes/       # API endpoints (auth, categories, expenses)
-  │   │   ├── controllers/  # Business logic
-  │   │   ├── models/       # Database queries
-  │   │   └── middleware/   # Authentication, error handling
-  │   └── node_modules/     # Installed dependencies
+├── index.html # Main frontend (login + dashboard)
+├── schema.sql # MySQL database schema
+├── .env # Environment variables
+├── package.json # Node.js dependencies & scripts
+├── src/
+│ ├── server.js # Express server entry point
+│ ├── routes/ # API endpoints (auth, categories, expenses)
+│ ├── controllers/ # Business logic
+│ ├── models/ # Database queries
+│ └── middleware/ # Authentication, error handling
+└── node_modules/ # Installed dependen
 
-⚙️ Installation
-1. Clone Repository
+⚙
+---
+
+## ⚙️ Installation
+
+### 1. Clone the Repository
+```bash
 git clone https://github.com/Nicolas-2025/calculadora-despesas-pi.git
 cd calculadora-despesas-pi
+
 
 2. Install Dependencies
 npm install
 
-3. Setup Database
+3. Set Up the Database
 
-Make sure MySQL server is running.
+Make sure your MySQL server is running.
 
 Run the schema:
 
@@ -69,7 +70,7 @@ mysql -u root -p < schema.sql
 
 4. Configure Environment Variables
 
-Edit .env file:
+Create or edit the .env file with:
 
 PORT=3000
 CORS_ORIGIN=http://127.0.0.1:5500,http://localhost:5500
@@ -78,7 +79,7 @@ DB_USER=root
 DB_PASS=admin
 DB_NAME=despesas_pro
 
-5. Run the Server
+5. Start the Server
 npm run dev
 
 
@@ -87,61 +88,61 @@ The API will be available at:
 
 6. Run the Frontend
 
-Open index.html using Live Server (VS Code extension) or any local server.
+Open index.html using the Live Server extension in VS Code or any local web server.
 
 🔑 API Endpoints
 Authentication
 
-POST /api/auth/register → Create user
+POST /api/auth/register → Create a user
 
-POST /api/auth/login → Authenticate user
+POST /api/auth/login → Authenticate a user
 
 Categories
 
-POST /api/categories → Create category
+POST /api/categories → Create a category
 
-GET /api/categories → List categories
+GET /api/categories → List all categories
 
 Expenses
 
-POST /api/expenses → Add expense
+POST /api/expenses → Add a new expense
 
 GET /api/expenses → List expenses (filterable)
 
 🛡️ Security
 
-Passwords stored securely using bcrypt hashing.
+Passwords securely hashed using bcrypt.
 
-Helmet for HTTP headers security.
+HTTP headers protected via Helmet.
 
 CORS configured via environment variables.
 
-📊 Database Schema
+🧱 Database Schema
 
-The database despesas_pro contains 3 main tables:
+The despesas_pro database consists of 3 main tables:
 
 users → stores user credentials
 
-categories → custom expense categories per user
+categories → user-specific expense categories
 
-expenses → expense records with category, date, description, value
+expenses → expense records (category, date, description, value)
 
-🖼️ Screenshots (to add)
+🖼️ Screenshots (coming soon)
 
 Login Screen
 
 Dashboard with Charts
 
-Expense Management
+Expense Management Interface
 
 📌 Requirements
 
-Node.js >=18
+Node.js v18 or higher
 
-MySQL >=8
+MySQL v8 or higher
 
-Live Server (or similar) for frontend
+Live Server extension (or any static file server)
 
 👨‍💻 Author
 
-Developed by Nicolas Silva.
+Developed by Nicolas Silva
