@@ -12,8 +12,9 @@ router.post('/register', async (req, res) => {
     if (!name || !password) return res.status(400).json({ error: 'Nome e senha obrigatórios' });
 
     // Verifica se já existe
-    const [exists] = await db.query('SELECT id FROM users WHERE name = ?', [name]);
-    if (exists.length > 0) {
+    const [rows] = await db.query('SELECT id FROM users WHERE name = ?', [name]);
+if (rows.length > 0) {
+
       return res.status(400).json({ error: 'Nome já cadastrado' });
     }
 

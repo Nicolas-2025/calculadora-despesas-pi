@@ -98,9 +98,29 @@
     .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
     .card h3{margin:0;font-size:16px}
 
-    .table{width:100%;border-collapse:collapse;margin-top:12px}
+    .table {
+  table-layout: auto;
+  width: 100%;
+}
+
+.table th:nth-child(1), .table td:nth-child(1) { width: 110px; }
+.table th:nth-child(2), .table td:nth-child(2) { width: 28%; }
+.table th:nth-child(3), .table td:nth-child(3) { /* remova width aqui */ }
+.table th:nth-child(4), .table td:nth-child(4) { width: 110px; white-space: nowrap; }
+.table th:nth-child(5), .table td:nth-child(5) { width: 40px; }
+
     .table th,.table td{padding:10px 12px;border-bottom:var(--border);text-align:left}
     .table th{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.12em}
+    .table td:nth-child(4), .table th:nth-child(4) {
+  min-width: 180px;
+  white-space: nowrap;
+}
+.table td:nth-child(3), .table th:nth-child(3) {
+  overflow: visible;
+  text-overflow: unset;
+  white-space: normal;
+  word-break: break-word;
+}
 
     .chip{display:inline-flex;gap:8px;align-items:center;background:rgba(255,255,255,.05);border:var(--border);padding:6px 10px;border-radius:999px;font-size:12px}
 
@@ -134,6 +154,15 @@
       .app{grid-template-columns:1fr}
       .sidebar{position:sticky;top:0;z-index:10}
     }
+
+    .valor-despesa {
+  white-space: nowrap;
+  overflow: visible;
+  text-overflow: unset;
+  max-width: none;
+  display: inline-block;
+  vertical-align: middle;
+}
   </style>
 </head>
 <body>
@@ -253,7 +282,15 @@
         <div class="card-header"><h3><i class="fa-solid fa-table"></i> Lista de despesas</h3></div>
         <div class="card-body">
           <table class="table" id="tbl">
-            <thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Valor</th><th style="width:1%"></th></tr></thead>
+            <thead>
+  <tr>
+    <th>Data</th>
+    <th>Desc</th>
+    <th>Cat</th>
+    <th>Valor</th>
+    <th></th>
+  </tr>
+</thead>
             <tbody id="tbody"></tbody>
           </table>
         </div>
@@ -582,26 +619,30 @@ async function refreshCatSelects() {
     });
 
     // Table + totals
-    function renderTable(items){
-      const tbody = $('#tbody'); tbody.innerHTML='';
-      let total = 0;
-      items.sort((a,b)=> new Date(b.date)-new Date(a.date)).forEach(it=>{
-        total += Number(it.value)||0;
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${new Date(it.date).toLocaleDateString()}</td>
-          <td>${escapeHtml(it.description)}</td>
-          <td><span class="chip"><i class="fa-solid fa-tag"></i> ${escapeHtml(it.category)}</span></td>
-          <td><b>R$ ${Number(it.value).toFixed(2)}</b></td>
-          <td><button class="btn btn-ghost" title="Remover" data-remove="${it.id}"><i class="fa-regular fa-trash-can"></i></button></td>
-        `;
-        tbody.appendChild(tr);
-      });
-      $('#totalOut').textContent = total.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
-      $$('button[data-remove]').forEach(b=> b.addEventListener('click', async (e)=>{
-        const id = e.currentTarget.getAttribute('data-remove');
-        if(confirm('Remover esta despesa?')){ await API.removeExpense(id); refreshAll(); }
-      }));
+    function truncate(str, n) {
+  return str.length > n ? str.slice(0, n - 1) + '…' : str;
+}
+
+function renderTable(items){
+  const tbody = $('#tbody'); tbody.innerHTML='';
+  let total = 0;
+  items.sort((a,b)=> new Date(b.date)-new Date(a.date)).forEach(it=>{
+    total += Number(it.value)||0;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${new Date(it.date).toLocaleDateString()}</td>
+      <td>${escapeHtml(truncate(it.description, 24))}</td>
+      <td><span class="chip"><i class="fa-solid fa-tag"></i> ${escapeHtml(it.category)}</span></td>
+      <td><b class="valor-despesa">R$ ${Number(it.value).toFixed(2)}</b></td>
+      <td><button class="btn btn-ghost" title="Remover" data-remove="${it.id}"><i class="fa-regular fa-trash-can"></i></button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+  $('#totalOut').textContent = total.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+  $$('button[data-remove]').forEach(b=> b.addEventListener('click', async (e)=>{
+    const id = e.currentTarget.getAttribute('data-remove');
+    if(confirm('Remover esta despesa?')){ await API.removeExpense(id); refreshAll(); }
+  }));
     }
 
     // Charts
