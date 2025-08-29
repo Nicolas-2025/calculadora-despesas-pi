@@ -33,18 +33,21 @@ Users can register, log in, create categories, add expenses, and visualize their
 
 ## 🏗️ Project Structure
 
+```
 projetocalc/
-├── index.html # Main frontend (login + dashboard)
-├── schema.sql # MySQL database schema
-├── .env # Environment variables
-├── package.json # Node.js dependencies & scripts
+├── index.html           # Main frontend (login + dashboard)
+├── schema.sql           # MySQL database schema
+├── .env                 # Environment variables
+├── package.json         # Node.js dependencies & scripts
 ├── src/
-│ ├── server.js # Express server entry point
-│ ├── routes/ # API endpoints (auth, categories, expenses)
-│ ├── controllers/ # Business logic
-│ ├── models/ # Database queries
-│ └── middleware/ # Authentication, error handling
-└── node_modules/ # Installed dependen
+│   ├── server.js        # Express server entry point
+│   ├── routes/          # API endpoints (auth, categories, expenses)
+│   ├── controllers/     # Business logic
+│   ├── models/          # Database queries
+│   └── middleware/      # Authentication, error handling
+└── node_modules/        # Installed dependencies
+```
+
 
 ⚙
 ---
