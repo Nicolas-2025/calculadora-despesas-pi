@@ -124,14 +124,6 @@ categories → user-specific expense categories
 
 expenses → expense records (category, date, description, value)
 
-🖼️ Screenshots (coming soon)
-
-Login Screen
-
-Dashboard with Charts
-
-Expense Management Interface
-
 📌 Requirements
 
 Node.js v18 or higher
