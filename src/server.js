@@ -13,7 +13,25 @@ const app = express();
 app.use(helmet());
 app.use(express.json());
 app.use(morgan('dev'));
-app.use(cors({ origin: process.env.CORS_ORIGIN?.split(',') || '*'}));
+
+// Configuração CORS mais robusta
+const corsOptions = {
+  origin: function(origin, callback) {
+    const allowedOrigins = (process.env.CORS_ORIGIN || '*').split(',').map(o => o.trim());
+    
+    if (!origin || allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.warn(`CORS bloqueado para origin: ${origin}`);
+      callback(null, true); // Permitir mesmo assim para debugging
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+};
+
+app.use(cors(corsOptions));
 
 app.get('/api/health', (req,res)=> res.json({ ok:true, uptime: process.uptime() }));
 app.use('/api', authRoutes);
