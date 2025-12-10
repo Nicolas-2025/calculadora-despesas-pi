@@ -636,7 +636,7 @@ function renderTable(items){
       <td>${escapeHtml(truncate(it.description, 24))}</td>
       <td><span class="chip"><i class="fa-solid fa-tag"></i> ${escapeHtml(it.category)}</span></td>
       <td><b class="valor-despesa">R$ ${Number(it.value).toFixed(2)}</b></td>
-      <td><button class="btn btn-ghost" title="Remover" data-remove="${it.id}"><i class="fa-regular fa-trash-can"></i></button></td>
+      <td><button class="btn btn-ghost" title="Remover" data-remove="${it.id}"><i class="fa-solid fa-trash"></i></button></td>
     `;
     tbody.appendChild(tr);
   });
