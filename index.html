@@ -70,6 +70,7 @@
     /* Buttons */
     .btn{display:inline-flex;align-items:center;gap:10px;border:none;cursor:pointer;border-radius:var(--btn-radius);padding:12px 16px;font-weight:600;transition:transform .15s ease, box-shadow .2s ease, background .2s ease, opacity .2s ease}
     .btn i{font-size:14px}
+    .table .btn{padding:6px 8px;font-size:12px;min-width:auto}
     .btn-primary{background:linear-gradient(135deg, var(--brand), var(--brand-2)); color:#fff; box-shadow:0 6px 16px rgba(124,128,255,.35)}
     .btn-primary:hover{transform:translateY(-1px)}
     .btn-ghost{background:rgba(255,255,255,.04); color:var(--txt); border:var(--border)}
@@ -105,9 +106,8 @@
 
 .table th:nth-child(1), .table td:nth-child(1) { width: 110px; }
 .table th:nth-child(2), .table td:nth-child(2) { width: 28%; }
-.table th:nth-child(3), .table td:nth-child(3) { /* remova width aqui */ }
 .table th:nth-child(4), .table td:nth-child(4) { width: 110px; white-space: nowrap; }
-.table th:nth-child(5), .table td:nth-child(5) { width: 40px; }
+.table th:nth-child(5), .table td:nth-child(5) { width: 60px; text-align: center; }
 
     .table th,.table td{padding:10px 12px;border-bottom:var(--border);text-align:left}
     .table th{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.12em}
